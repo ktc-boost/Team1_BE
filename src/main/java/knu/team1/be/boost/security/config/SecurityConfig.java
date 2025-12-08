@@ -80,7 +80,8 @@ public class SecurityConfig {
                 "https://boost.ai.kr",
                 "https://api.boost.ai.kr",
                 "https://qa.boost.ai.kr",
-                "http://localhost:5173"
+                "http://localhost:5173",
+                "https://qa-boost.vercel.app"
             ));
         configuration.setAllowedMethods(
             List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
