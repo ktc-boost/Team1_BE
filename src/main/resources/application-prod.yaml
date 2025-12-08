@@ -59,6 +59,7 @@ management:
     tags:
       application: boost-api
       env: prod
+
 webpush:
   vapid:
     public-key: ${VAPID_PUBLIC_KEY}

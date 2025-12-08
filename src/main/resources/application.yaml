@@ -75,12 +75,3 @@ boosting-score:
     done: 5
   comment-score: 1
   approve-score: 3
-
-management:
-  endpoints:
-    web:
-      base-path: /
-      path-mapping:
-        health: health
-        info: actuator/info
-        metrics: actuator/metrics
