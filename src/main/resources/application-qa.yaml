@@ -54,6 +54,10 @@ management:
   endpoint:
     health:
       show-details: always
+  metrics:
+    tags:
+      application: boost-api
+      env: qa
 
 webpush:
   vapid:

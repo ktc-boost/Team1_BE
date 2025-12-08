@@ -55,7 +55,10 @@ management:
   endpoint:
     health:
       show-details: never
-
+  metrics:
+    tags:
+      application: boost-api
+      env: prod
 webpush:
   vapid:
     public-key: ${VAPID_PUBLIC_KEY}
