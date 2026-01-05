@@ -36,6 +36,8 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET_KEY}
+  access-token-expire-time: 30d  # 개발 환경에서는 30일로 길게 설정
+  refresh-token-expire-time: 90d  # 개발 환경에서는 90일로 길게 설정
 
 boost:
   oci:
