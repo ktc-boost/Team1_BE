@@ -46,6 +46,11 @@ boost:
       access-key: ${OCI_ACCESS_KEY}
       secret-key: ${OCI_SECRET_KEY}
 
+server:
+  tomcat:
+    mbeanregistry:
+      enabled: true
+
 management:
   endpoints:
     web:
