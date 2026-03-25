@@ -11,7 +11,7 @@ import knu.team1.be.boost.file.dto.FileCompleteRequestDto;
 import knu.team1.be.boost.file.dto.FileCompleteResponseDto;
 import knu.team1.be.boost.file.dto.FilePresignedUrlResponseDto;
 import knu.team1.be.boost.file.dto.FileRequestDto;
-import knu.team1.be.boost.file.dto.ProjectFileListResponseDto;
+import knu.team1.be.boost.file.dto.FileResponseDto;
 import knu.team1.be.boost.file.dto.ProjectFileSummaryResponseDto;
 import knu.team1.be.boost.file.entity.File;
 import knu.team1.be.boost.file.entity.FileType;
@@ -27,8 +27,6 @@ import knu.team1.be.boost.task.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.unit.DataSize;
@@ -161,39 +159,20 @@ public class FileService {
     }
 
     @Transactional(readOnly = true)
-    public ProjectFileListResponseDto getFilesByProject(
-        UUID projectId,
-        UUID cursorId,
-        int limit,
-        UUID userId
-    ) {
+    public List<FileResponseDto> getFilesByProject(UUID projectId, UUID userId) {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new BusinessException(
-                ErrorCode.PROJECT_NOT_FOUND, "projectId: " + projectId
+                ErrorCode.PROJECT_NOT_FOUND,
+                "projectId: " + projectId
             ));
 
         accessPolicy.ensureProjectMember(project.getId(), userId);
 
-        LocalDateTime cursorCreatedAt = null;
-        if (cursorId != null) {
-            File cursor = fileRepository.findById(cursorId).orElse(null);
+        List<File> files = fileRepository.findAllByProjectId(project.getId());
 
-            if (cursor != null) {
-                cursorCreatedAt = cursor.getCreatedAt();
-            }
-        }
-
-        int safeLimit = Math.max(1, Math.min(limit, 50));
-        Pageable pageable = PageRequest.of(0, safeLimit + 1);
-
-        List<File> files = fileRepository.findByProjectWithCursor(
-            project,
-            cursorCreatedAt,
-            cursorId,
-            pageable
-        );
-
-        return ProjectFileListResponseDto.from(project.getId(), files, safeLimit);
+        return files.stream()
+            .map(FileResponseDto::from)
+            .toList();
     }
 
     @Transactional(readOnly = true)
