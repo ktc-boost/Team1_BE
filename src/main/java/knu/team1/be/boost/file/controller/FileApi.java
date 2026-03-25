@@ -1,6 +1,7 @@
 package knu.team1.be.boost.file.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -112,7 +113,9 @@ public interface FileApi {
         @ApiResponse(
             responseCode = "200",
             description = "프로젝트 파일 목록 조회 성공",
-            content = @Content(schema = @Schema(implementation = FileResponseDto.class))
+            content = @Content(
+                array = @ArraySchema(schema = @Schema(implementation = FileResponseDto.class))
+            )
         ),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content),
         @ApiResponse(responseCode = "401", description = "인증 실패", content = @Content),
