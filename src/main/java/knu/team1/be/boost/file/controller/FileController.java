@@ -9,7 +9,7 @@ import knu.team1.be.boost.file.dto.FileCompleteRequestDto;
 import knu.team1.be.boost.file.dto.FileCompleteResponseDto;
 import knu.team1.be.boost.file.dto.FilePresignedUrlResponseDto;
 import knu.team1.be.boost.file.dto.FileRequestDto;
-import knu.team1.be.boost.file.dto.FileResponseDto;
+import knu.team1.be.boost.file.dto.ProjectFileResponseDto;
 import knu.team1.be.boost.file.dto.ProjectFileSummaryResponseDto;
 import knu.team1.be.boost.file.service.FileService;
 import lombok.RequiredArgsConstructor;
@@ -55,11 +55,11 @@ public class FileController implements FileApi {
     }
 
     @Override
-    public ResponseEntity<List<FileResponseDto>> getFilesByProject(
+    public ResponseEntity<List<ProjectFileResponseDto>> getFilesByProject(
         @PathVariable UUID projectId,
         @AuthenticationPrincipal UserPrincipalDto user
     ) {
-        List<FileResponseDto> response = fileService.getFilesByProject(projectId, user.id());
+        List<ProjectFileResponseDto> response = fileService.getFilesByProject(projectId, user.id());
         return ResponseEntity.ok(response);
     }
 

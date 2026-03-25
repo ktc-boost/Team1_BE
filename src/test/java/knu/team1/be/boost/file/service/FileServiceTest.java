@@ -26,7 +26,7 @@ import knu.team1.be.boost.file.dto.FileCompleteRequestDto;
 import knu.team1.be.boost.file.dto.FileCompleteResponseDto;
 import knu.team1.be.boost.file.dto.FilePresignedUrlResponseDto;
 import knu.team1.be.boost.file.dto.FileRequestDto;
-import knu.team1.be.boost.file.dto.FileResponseDto;
+import knu.team1.be.boost.file.dto.ProjectFileResponseDto;
 import knu.team1.be.boost.file.dto.ProjectFileSummaryResponseDto;
 import knu.team1.be.boost.file.entity.File;
 import knu.team1.be.boost.file.entity.FileStatus;
@@ -334,14 +334,14 @@ class FileServiceTest {
                 .willReturn(files);
 
             // when
-            List<FileResponseDto> res = fileService.getFilesByProject(projectId, userId);
+            List<ProjectFileResponseDto> res = fileService.getFilesByProject(projectId, userId);
 
             // then
             assertThat(res)
-                .asInstanceOf(list(FileResponseDto.class))
+                .asInstanceOf(list(ProjectFileResponseDto.class))
                 .hasSize(2);
-            assertThat(res.get(0).id()).isEqualTo(f1.getId());
-            assertThat(res.get(1).id()).isEqualTo(f2.getId());
+            assertThat(res.get(0).fileId()).isEqualTo(f1.getId());
+            assertThat(res.get(1).taskId()).isEqualTo(f2.getTask().getId());
 
             verify(accessPolicy).ensureProjectMember(projectId, userId);
         }

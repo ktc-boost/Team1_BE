@@ -16,7 +16,7 @@ import knu.team1.be.boost.file.dto.FileCompleteRequestDto;
 import knu.team1.be.boost.file.dto.FileCompleteResponseDto;
 import knu.team1.be.boost.file.dto.FilePresignedUrlResponseDto;
 import knu.team1.be.boost.file.dto.FileRequestDto;
-import knu.team1.be.boost.file.dto.FileResponseDto;
+import knu.team1.be.boost.file.dto.ProjectFileResponseDto;
 import knu.team1.be.boost.file.dto.ProjectFileSummaryResponseDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -114,7 +114,7 @@ public interface FileApi {
             responseCode = "200",
             description = "프로젝트 파일 목록 조회 성공",
             content = @Content(
-                array = @ArraySchema(schema = @Schema(implementation = FileResponseDto.class))
+                array = @ArraySchema(schema = @Schema(implementation = ProjectFileResponseDto.class))
             )
         ),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content),
@@ -124,7 +124,7 @@ public interface FileApi {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
     })
     @GetMapping("/projects/{projectId}/files")
-    ResponseEntity<List<FileResponseDto>> getFilesByProject(
+    ResponseEntity<List<ProjectFileResponseDto>> getFilesByProject(
         @PathVariable UUID projectId,
         @AuthenticationPrincipal UserPrincipalDto user
     );

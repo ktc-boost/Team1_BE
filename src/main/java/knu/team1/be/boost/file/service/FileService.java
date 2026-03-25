@@ -11,7 +11,7 @@ import knu.team1.be.boost.file.dto.FileCompleteRequestDto;
 import knu.team1.be.boost.file.dto.FileCompleteResponseDto;
 import knu.team1.be.boost.file.dto.FilePresignedUrlResponseDto;
 import knu.team1.be.boost.file.dto.FileRequestDto;
-import knu.team1.be.boost.file.dto.FileResponseDto;
+import knu.team1.be.boost.file.dto.ProjectFileResponseDto;
 import knu.team1.be.boost.file.dto.ProjectFileSummaryResponseDto;
 import knu.team1.be.boost.file.entity.File;
 import knu.team1.be.boost.file.entity.FileType;
@@ -159,7 +159,7 @@ public class FileService {
     }
 
     @Transactional(readOnly = true)
-    public List<FileResponseDto> getFilesByProject(UUID projectId, UUID userId) {
+    public List<ProjectFileResponseDto> getFilesByProject(UUID projectId, UUID userId) {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new BusinessException(
                 ErrorCode.PROJECT_NOT_FOUND,
@@ -171,7 +171,7 @@ public class FileService {
         List<File> files = fileRepository.findAllByProjectId(project.getId());
 
         return files.stream()
-            .map(FileResponseDto::from)
+            .map(ProjectFileResponseDto::from)
             .toList();
     }
 
