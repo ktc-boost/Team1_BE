@@ -25,11 +25,8 @@ import knu.team1.be.boost.file.dto.FileCompleteRequestDto;
 import knu.team1.be.boost.file.dto.FileCompleteResponseDto;
 import knu.team1.be.boost.file.dto.FilePresignedUrlResponseDto;
 import knu.team1.be.boost.file.dto.FileRequestDto;
-import knu.team1.be.boost.file.dto.ProjectFileListResponseDto;
-import knu.team1.be.boost.file.dto.ProjectFileResponseDto;
 import knu.team1.be.boost.file.dto.ProjectFileSummaryResponseDto;
 import knu.team1.be.boost.file.entity.FileStatus;
-import knu.team1.be.boost.file.entity.FileType;
 import knu.team1.be.boost.file.service.FileService;
 import knu.team1.be.boost.security.filter.JwtAuthFilter;
 import org.junit.jupiter.api.DisplayName;
@@ -305,108 +302,31 @@ class FileControllerTest {
     class GetFilesByProject {
 
         @Test
-        @DisplayName("프로젝트 파일 목록 조회 성공 - (커서 X)")
-        void success_withoutCursor() throws Exception {
-            // given
+        @DisplayName("프로젝트 파일 목록 조회 성공 - 상태 코드만 확인")
+        void success_statusOnly() throws Exception {
             UUID projectId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
 
-            ProjectFileResponseDto f1 = new ProjectFileResponseDto(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                "회의록.pdf",
-                "application/pdf",
-                123456,
-                FileType.PDF,
-                LocalDateTime.of(2025, 9, 9, 12, 30)
-            );
-
-            ProjectFileResponseDto f2 = new ProjectFileResponseDto(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                "설계서.pdf",
-                "application/pdf",
-                345678,
-                FileType.PDF,
-                LocalDateTime.of(2025, 9, 9, 14, 10)
-            );
-
-            ProjectFileListResponseDto response = new ProjectFileListResponseDto(
-                projectId,
-                List.of(f1, f2),
-                2,
-                null,
-                false
-            );
-
-            given(fileService.getFilesByProject(eq(projectId), any(), eq(20), any()))
-                .willReturn(response);
-
-            // when & then
-            mockMvc.perform(get("/api/projects/{projectId}/files", projectId)
-                    .param("limit", "20"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.projectId").value(projectId.toString()))
-                .andExpect(jsonPath("$.files[0].filename").value("회의록.pdf"))
-                .andExpect(jsonPath("$.files[1].filename").value("설계서.pdf"))
-                .andExpect(jsonPath("$.count").value(2))
-                .andExpect(jsonPath("$.hasNext").value(false));
-        }
-
-        @Test
-        @DisplayName("프로젝트 파일 목록 조회 성공 - 다음 페이지 존재 (hasNext=true)")
-        void success_hasNext() throws Exception {
-            UUID projectId = UUID.randomUUID();
-            UUID nextCursor = UUID.randomUUID();
-
-            ProjectFileResponseDto f1 = new ProjectFileResponseDto(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                "발표자료.pdf",
-                "application/pdf",
-                567890,
-                FileType.PDF,
-                LocalDateTime.of(2025, 9, 10, 10, 0)
-            );
-
-            ProjectFileListResponseDto response = new ProjectFileListResponseDto(
-                projectId,
-                List.of(f1),
-                1,
-                nextCursor,
-                true
-            );
-
-            given(fileService.getFilesByProject(eq(projectId), any(), eq(20), any()))
-                .willReturn(response);
-
-            mockMvc.perform(get("/api/projects/{projectId}/files", projectId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.hasNext").value(true))
-                .andExpect(jsonPath("$.nextCursor").value(nextCursor.toString()));
-        }
-
-        @Test
-        @DisplayName("프로젝트 파일 목록 조회 실패 - 400 (limit 유효하지 않음)")
-        void fail_invalidLimit() throws Exception {
-            UUID projectId = UUID.randomUUID();
+            given(fileService.getFilesByProject(eq(projectId), eq(userId)))
+                .willReturn(List.of());
 
             mockMvc.perform(get("/api/projects/{projectId}/files", projectId)
-                    .param("limit", "0")) // Min(1) 위반
-                .andExpect(status().isBadRequest());
+                    .requestAttr("userId", userId)
+                )
+                .andExpect(status().isOk());
         }
 
         @Test
         @DisplayName("프로젝트 파일 목록 조회 실패 - 404 (프로젝트 없음)")
         void fail_projectNotFound() throws Exception {
             UUID projectId = UUID.randomUUID();
-            given(fileService.getFilesByProject(eq(projectId), any(), eq(20), any()))
+            given(fileService.getFilesByProject(eq(projectId), any()))
                 .willThrow(new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
             mockMvc.perform(get("/api/projects/{projectId}/files", projectId))
                 .andExpect(status().isNotFound());
         }
     }
-
 
     @Nested
     @DisplayName("프로젝트 파일 요약 조회")

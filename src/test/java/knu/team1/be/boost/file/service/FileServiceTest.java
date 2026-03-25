@@ -26,8 +26,7 @@ import knu.team1.be.boost.file.dto.FileCompleteRequestDto;
 import knu.team1.be.boost.file.dto.FileCompleteResponseDto;
 import knu.team1.be.boost.file.dto.FilePresignedUrlResponseDto;
 import knu.team1.be.boost.file.dto.FileRequestDto;
-import knu.team1.be.boost.file.dto.ProjectFileListResponseDto;
-import knu.team1.be.boost.file.dto.ProjectFileResponseDto;
+import knu.team1.be.boost.file.dto.FileResponseDto;
 import knu.team1.be.boost.file.dto.ProjectFileSummaryResponseDto;
 import knu.team1.be.boost.file.entity.File;
 import knu.team1.be.boost.file.entity.FileStatus;
@@ -324,7 +323,6 @@ class FileServiceTest {
         @DisplayName("프로젝트 파일 목록 조회 성공")
         void success() {
             // given
-            UUID cursorId = null;
             given(projectRepository.findById(projectId)).willReturn(Optional.of(project));
             doNothing().when(accessPolicy).ensureProjectMember(eq(projectId), eq(userId));
 
@@ -332,20 +330,19 @@ class FileServiceTest {
             File f2 = Fixtures.fileCompleted(UUID.randomUUID(), member, task);
             List<File> files = List.of(f1, f2);
 
-            given(
-                fileRepository.findByProjectWithCursor(eq(project), eq(null), eq(cursorId), any()))
+            given(fileRepository.findAllByProjectId(projectId))
                 .willReturn(files);
 
             // when
-            ProjectFileListResponseDto res =
-                fileService.getFilesByProject(projectId, cursorId, 20, userId);
+            List<FileResponseDto> res = fileService.getFilesByProject(projectId, userId);
 
             // then
-            assertThat(res.projectId()).isEqualTo(projectId);
-            assertThat(res.files())
-                .asInstanceOf(list(ProjectFileResponseDto.class))
+            assertThat(res)
+                .asInstanceOf(list(FileResponseDto.class))
                 .hasSize(2);
-            assertThat(res.hasNext()).isFalse();
+            assertThat(res.get(0).id()).isEqualTo(f1.getId());
+            assertThat(res.get(1).id()).isEqualTo(f2.getId());
+
             verify(accessPolicy).ensureProjectMember(projectId, userId);
         }
 
@@ -357,32 +354,12 @@ class FileServiceTest {
 
             // when & then
             assertThatThrownBy(() ->
-                fileService.getFilesByProject(projectId, null, 20, userId)
+                fileService.getFilesByProject(projectId, userId)
             )
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NOT_FOUND);
 
             verifyNoInteractions(accessPolicy);
-        }
-
-        @Test
-        @DisplayName("프로젝트 파일 목록 조회 - 커서 존재 (다음 페이지용)")
-        void success_withCursor() {
-            UUID cursorId = UUID.randomUUID();
-            File cursorFile = Fixtures.fileCompleted(cursorId, member, task);
-            given(projectRepository.findById(projectId)).willReturn(Optional.of(project));
-            given(fileRepository.findById(cursorId)).willReturn(Optional.of(cursorFile));
-            doNothing().when(accessPolicy).ensureProjectMember(eq(projectId), eq(userId));
-
-            given(fileRepository.findByProjectWithCursor(eq(project), any(), eq(cursorId), any()))
-                .willReturn(List.of(Fixtures.fileCompleted(UUID.randomUUID(), member, task)));
-
-            ProjectFileListResponseDto res =
-                fileService.getFilesByProject(projectId, cursorId, 10, userId);
-
-            assertThat(res.projectId()).isEqualTo(projectId);
-            assertThat(res.count()).isEqualTo(1);
-            assertThat(res.hasNext()).isFalse();
         }
     }
 
