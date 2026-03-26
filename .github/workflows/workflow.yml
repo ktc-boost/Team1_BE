@@ -61,7 +61,7 @@ jobs:
             # 2. Dockerfile 생성 (이미지 굽기용)
             echo "FROM eclipse-temurin:21-jre" > Dockerfile
             echo "COPY *.jar app.jar" >> Dockerfile
-            echo "ENTRYPOINT [\"java\",\"-jar\",\"/app.jar\",\"--spring.profiles.active=qa\"]" >> Dockerfile
+            echo "ENTRYPOINT [\"java\",\"-Duser.timezone=Asia/Seoul\",\"-jar\",\"/app.jar\",\"--spring.profiles.active=qa\"]" >> Dockerfile
 
             # 3. 기존 컨테이너 중지 및 삭제
             docker stop qa-server || true
@@ -69,7 +69,14 @@ jobs:
 
             # 4. 이미지 빌드 & 실행
             docker build -t boost-app:qa .
-            docker run -d -p 8080:8080 --network db_default --env-file .env --name qa-server boost-app:qa
+            docker run -d \
+                          -p 8080:8080 \
+                          --network db_default \
+                          --env-file .env \
+                          -e TZ=Asia/Seoul \
+                          -v /etc/localtime:/etc/localtime:ro \
+                          --name qa-server \
+                          boost-app:qa
 
       # 2. Production 배포 (main 브랜치) - Blue/Green (무중단)
       - name: (PROD) Copy JAR to Server
@@ -99,7 +106,7 @@ jobs:
             # 2. Dockerfile 생성
             echo "FROM eclipse-temurin:21-jre" > Dockerfile
             echo "COPY *.jar app.jar" >> Dockerfile
-            echo "ENTRYPOINT [\"java\",\"-jar\",\"/app.jar\",\"--spring.profiles.active=prod\"]" >> Dockerfile
+            echo "ENTRYPOINT [\"java\",\"-Duser.timezone=Asia/Seoul\",\"-jar\",\"/app.jar\",\"--spring.profiles.active=prod\"]" >> Dockerfile
 
             # 3. 현재 실행 중인 포트 확인 (Nginx 설정에서 grep)
             # upstream backend { server 127.0.0.1:xxxx; } 에서 xxxx 추출
@@ -122,7 +129,13 @@ jobs:
             docker stop boost-$TARGET_NAME || true
             docker rm boost-$TARGET_NAME || true
 
-            docker run -d -p $TARGET_PORT:8080 --env-file .env --name boost-$TARGET_NAME boost-app:prod
+            docker run -d \
+              -p $TARGET_PORT:8080 \
+              --env-file .env \
+              -e TZ=Asia/Seoul \
+              -v /etc/localtime:/etc/localtime:ro \
+              --name boost-$TARGET_NAME \
+              boost-app:prod
 
             # 5. Health Check (새 서버가 뜰 때까지 대기 - 최대 60초)
             echo "Health checking..."
