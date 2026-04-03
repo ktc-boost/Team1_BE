@@ -134,7 +134,6 @@ public class TaskService {
         task.ensureTaskInProject(project.getId());
 
         accessPolicy.ensureProjectMember(project.getId(), user.id());
-        accessPolicy.ensureTaskAssignee(task.getId(), user.id());
 
         Set<Tag> tags = findTagsByIds(request.tags());
         tags.forEach(tag -> tag.ensureTagInProject(project.getId()));
@@ -195,7 +194,6 @@ public class TaskService {
         task.ensureTaskInProject(project.getId());
 
         accessPolicy.ensureProjectMember(project.getId(), user.id());
-        accessPolicy.ensureTaskAssignee(task.getId(), user.id());
 
         taskRepository.delete(task);
     }
@@ -220,7 +218,6 @@ public class TaskService {
         task.ensureTaskInProject(project.getId());
 
         accessPolicy.ensureProjectMember(project.getId(), user.id());
-        accessPolicy.ensureTaskAssignee(task.getId(), user.id());
 
         validateCanMarkDone(project, task, request.status());
 

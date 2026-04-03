@@ -365,8 +365,6 @@ class TaskServiceTest {
             doNothing().when(accessPolicy)
                 .ensureProjectMember(eq(projectId), eq(userId));
             doNothing().when(accessPolicy)
-                .ensureTaskAssignee(eq(taskId), eq(userId));
-            doNothing().when(accessPolicy)
                 .ensureAssigneesAreProjectMembers(eq(projectId), any(Set.class));
 
             TaskUpdateRequestDto request = Fixtures.reqUpdate(
@@ -488,7 +486,6 @@ class TaskServiceTest {
             given(taskRepository.findById(taskId)).willReturn(Optional.of(baseTask));
 
             doNothing().when(accessPolicy).ensureProjectMember(eq(projectId), eq(userId));
-            doNothing().when(accessPolicy).ensureTaskAssignee(eq(taskId), eq(userId));
             doNothing().when(accessPolicy).ensureAssigneesAreProjectMembers(eq(projectId), any());
 
             UUID tagId = UUID.randomUUID();
@@ -539,7 +536,6 @@ class TaskServiceTest {
 
             given(tagRepository.findAllById(anyList())).willReturn(List.of(invalidTag));
             doNothing().when(accessPolicy).ensureProjectMember(eq(projectId), eq(userId));
-            doNothing().when(accessPolicy).ensureTaskAssignee(eq(taskId), eq(userId));
 
             TaskUpdateRequestDto request = Fixtures.reqUpdate(
                 "제목",
@@ -571,7 +567,6 @@ class TaskServiceTest {
             given(taskRepository.findById(taskId)).willReturn(Optional.of(baseTask));
 
             doNothing().when(accessPolicy).ensureProjectMember(eq(projectId), eq(userId));
-            doNothing().when(accessPolicy).ensureTaskAssignee(eq(taskId), eq(userId));
             doNothing().when(accessPolicy).ensureAssigneesAreProjectMembers(eq(projectId), any());
 
             given(projectMembershipRepository.countByProjectId(projectId)).willReturn(3);
@@ -603,6 +598,44 @@ class TaskServiceTest {
             verify(fileRepository, never()).countByTaskId(any());
         }
 
+        @Test
+        @DisplayName("할 일 수정 성공 - 프로젝트 멤버면 비담당자여도 가능")
+        void updateTask_success_projectMemberCanEditWithoutAssigneeRole() {
+            // given
+            UUID taskId = baseTask.getId();
+            UUID anotherMemberId = UUID.randomUUID();
+            UserPrincipalDto anotherUser = new UserPrincipalDto(
+                anotherMemberId, "other-user", "https://example.com/avatar/other-user"
+            );
+
+            given(projectRepository.findById(projectId)).willReturn(Optional.of(project));
+            given(taskRepository.findById(taskId)).willReturn(Optional.of(baseTask));
+            given(projectMembershipRepository.countByProjectId(projectId)).willReturn(4);
+
+            doNothing().when(accessPolicy).ensureProjectMember(eq(projectId), eq(anotherMemberId));
+            doNothing().when(accessPolicy)
+                .ensureAssigneesAreProjectMembers(eq(projectId), any(Set.class));
+
+            TaskUpdateRequestDto request = Fixtures.reqUpdate(
+                "프로젝트 멤버 수정",
+                "담당자가 아니어도 수정 가능",
+                TaskStatus.PROGRESS,
+                Fixtures.DUE2,
+                false,
+                1,
+                List.of(),
+                List.of()
+            );
+
+            // when
+            TaskResponseDto response = taskService.updateTask(projectId, taskId, request, anotherUser);
+
+            // then
+            assertThat(response.title()).isEqualTo("프로젝트 멤버 수정");
+            verify(accessPolicy).ensureProjectMember(projectId, anotherMemberId);
+            verify(accessPolicy, never()).ensureTaskAssignee(taskId, anotherMemberId);
+        }
+
     }
 
     @Nested
@@ -619,7 +652,6 @@ class TaskServiceTest {
             given(taskRepository.findById(taskId)).willReturn(Optional.of(baseTask));
 
             doNothing().when(accessPolicy).ensureProjectMember(eq(projectId), eq(userId));
-            doNothing().when(accessPolicy).ensureTaskAssignee(eq(taskId), eq(userId));
 
             // when
             taskService.deleteTask(projectId, taskId, user);
@@ -680,6 +712,30 @@ class TaskServiceTest {
             verify(taskRepository, never()).delete(any());
             verifyNoInteractions(accessPolicy);
         }
+
+        @Test
+        @DisplayName("할 일 삭제 성공 - 프로젝트 멤버면 비담당자여도 가능")
+        void deleteTask_success_projectMemberCanDeleteWithoutAssigneeRole() {
+            // given
+            UUID taskId = baseTask.getId();
+            UUID anotherMemberId = UUID.randomUUID();
+            UserPrincipalDto anotherUser = new UserPrincipalDto(
+                anotherMemberId, "other-user", "https://example.com/avatar/other-user"
+            );
+
+            given(projectRepository.findById(projectId)).willReturn(Optional.of(project));
+            given(taskRepository.findById(taskId)).willReturn(Optional.of(baseTask));
+
+            doNothing().when(accessPolicy).ensureProjectMember(eq(projectId), eq(anotherMemberId));
+
+            // when
+            taskService.deleteTask(projectId, taskId, anotherUser);
+
+            // then
+            verify(taskRepository).delete(baseTask);
+            verify(accessPolicy).ensureProjectMember(projectId, anotherMemberId);
+            verify(accessPolicy, never()).ensureTaskAssignee(taskId, anotherMemberId);
+        }
     }
 
     @Nested
@@ -696,7 +752,6 @@ class TaskServiceTest {
             given(taskRepository.findById(taskId)).willReturn(Optional.of(baseTask));
 
             doNothing().when(accessPolicy).ensureProjectMember(eq(projectId), eq(userId));
-            doNothing().when(accessPolicy).ensureTaskAssignee(eq(taskId), eq(userId));
 
             TaskStatusRequestDto request = Fixtures.reqStatus(TaskStatus.REVIEW);
 
@@ -765,6 +820,34 @@ class TaskServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TASK_NOT_IN_PROJECT);
 
             verifyNoInteractions(accessPolicy);
+        }
+
+        @Test
+        @DisplayName("할 일 상태 변경 성공 - 프로젝트 멤버면 비담당자여도 가능")
+        void changeStatus_success_projectMemberCanChangeWithoutAssigneeRole() {
+            // given
+            UUID taskId = baseTask.getId();
+            UUID anotherMemberId = UUID.randomUUID();
+            UserPrincipalDto anotherUser = new UserPrincipalDto(
+                anotherMemberId, "other-user", "https://example.com/avatar/other-user"
+            );
+
+            given(projectRepository.findById(projectId)).willReturn(Optional.of(project));
+            given(taskRepository.findById(taskId)).willReturn(Optional.of(baseTask));
+
+            doNothing().when(accessPolicy).ensureProjectMember(eq(projectId), eq(anotherMemberId));
+
+            TaskStatusRequestDto request = Fixtures.reqStatus(TaskStatus.REVIEW);
+
+            // when
+            TaskResponseDto response = taskService.changeTaskStatus(
+                projectId, taskId, request, anotherUser
+            );
+
+            // then
+            assertThat(response.status()).isEqualTo(TaskStatus.REVIEW);
+            verify(accessPolicy).ensureProjectMember(projectId, anotherMemberId);
+            verify(accessPolicy, never()).ensureTaskAssignee(taskId, anotherMemberId);
         }
     }
 
